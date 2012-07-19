@@ -63,6 +63,13 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
      * @parameter default-value="false"
      */
     private Boolean bare;
+    
+    /**
+     * Should we skip this compile?
+     * 
+     * @parameter default=value="false"
+     */
+    private Boolean skip;
 
     /**
      * What version of Coffee-Script should we compile with?
@@ -104,34 +111,42 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
         }
 
         getLog().info(String.format("coffee-maven-plugin using coffee script version %s", version));
-        CoffeeScriptCompiler coffeeScriptCompiler = new CoffeeScriptCompiler(version, bare);
-
-        try {
-            if (compileIndividualFiles) {
-                getLog().info("Starting individual compilations of files");
-
-                for (JoinSet joinSet : findJoinSets()) {
-                    StringBuilder compiled = new StringBuilder();
-                    for (File file : joinSet.getFiles()) {
-                        getLog().info("Compiling File " + file.getName() + " in JoinSet:" + joinSet.getId());
-                        compiled
-                                .append(coffeeScriptCompiler.compile(Files.toString(file, Charsets.UTF_8)))
-                                .append("\n");
-                    }
-                    write(joinSet.getCoffeeOutputDirectory(), joinSet.getId(), compiled.toString());
-                }
-            } else {
-                for (JoinSet joinSet : findJoinSets()) {
-                    getLog().info("Compiling JoinSet: " + joinSet.getId() + " with files:  " + joinSet.getFileNames());
-
-                    String compiled = coffeeScriptCompiler.compile(joinSet.getConcatenatedStringOfFiles());
-
-                    write(joinSet.getCoffeeOutputDirectory(), joinSet.getId(), compiled);
-                }
-            }
-
-        } catch (Exception e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+        if(skip == null){
+        	skip = false;
+        }
+        CoffeeScriptCompiler coffeeScriptCompiler = new CoffeeScriptCompiler(version, bare, skip);
+        
+        if(!skip){
+	        try {
+	            if (compileIndividualFiles) {
+	                getLog().info("Starting individual compilations of files");
+	
+	                for (JoinSet joinSet : findJoinSets()) {
+	                    StringBuilder compiled = new StringBuilder();
+	                    for (File file : joinSet.getFiles()) {
+	                        getLog().info("Compiling File " + file.getName() + " in JoinSet:" + joinSet.getId());
+	                        compiled
+	                                .append(coffeeScriptCompiler.compile(Files.toString(file, Charsets.UTF_8)))
+	                                .append("\n");
+	                    }
+	                    write(joinSet.getCoffeeOutputDirectory(), joinSet.getId(), compiled.toString());
+	                }
+	            } else {
+	                for (JoinSet joinSet : findJoinSets()) {
+	                    getLog().info("Compiling JoinSet: " + joinSet.getId() + " with files:  " + joinSet.getFileNames());
+	
+	                    String compiled = coffeeScriptCompiler.compile(joinSet.getConcatenatedStringOfFiles());
+	
+	                    write(joinSet.getCoffeeOutputDirectory(), joinSet.getId(), compiled);
+	                }
+	            }
+	
+	        } catch (Exception e) {
+	            throw new MojoExecutionException(e.getMessage(), e);
+	        }
+        }
+        else{
+        	getLog().info("Skipping Execution of Coffeescript compile");
         }
     }
 

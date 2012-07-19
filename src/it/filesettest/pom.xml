@@ -45,6 +45,7 @@
 
                 	<coffeeOutputDirectory>${project.build.directory}/coffee</coffeeOutputDirectory>
                 	<compileIndividualFiles>true</compileIndividualFiles>
+                	
                     <coffeeJoinSets>
                         <joinSet>
                             <id>main</id>

@@ -23,7 +23,7 @@ public class CoffeeScriptCompilerTest {
 
     @Test(dataProvider = "provideVersions")
     public void testCompiler(final String version) {
-        CoffeeScriptCompiler compiler = new CoffeeScriptCompiler(version, true);
+        CoffeeScriptCompiler compiler = new CoffeeScriptCompiler(version, true, false);
 
     }
 

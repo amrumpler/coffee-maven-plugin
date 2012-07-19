@@ -40,14 +40,16 @@ import java.util.Collections;
 public class CoffeeScriptCompiler {
 
     private boolean bare;
+    private boolean skip;
     private String version;
     private final Scriptable globalScope;
     private Scriptable coffeeScript;
 
-    public CoffeeScriptCompiler(String version, boolean bare) {
+    public CoffeeScriptCompiler(String version, boolean bare, boolean skip) {
         this.bare = bare;
         this.version = version;
-
+        this.skip = skip;
+        
         try {
             Context context = createContext();
             globalScope = context.initStandardObjects();
