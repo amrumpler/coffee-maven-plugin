@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.mozilla:rhino:head">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino/head/rhino-head.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino/head/rhino-head-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mozilla/rhino/head/rhino-head-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

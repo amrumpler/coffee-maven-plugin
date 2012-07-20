@@ -96,6 +96,13 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
      */
     private List<JoinSet> coffeeJoinSets;
 
+    /**
+     * This allows you to compile individual files and JoinSets at the same time.
+     *
+     * @parameter
+     */
+    private List<JoinSet> individualJoinSets;
+
     @VisibleForTesting
     List<String> acceptableVersions = ImmutableList.of("1.2.0", "1.3.1", "1.3.3");
 
@@ -150,17 +157,31 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
         }
     }
 
-    private List<JoinSet> findJoinSets() {
-        if (coffeeJoinSets != null && !coffeeJoinSets.isEmpty()) {
-            return coffeeJoinSets;
+    private List<JoinSet> findJoinSets() throws IOException {
+        boolean hasJoinSets = coffeeJoinSets != null && !coffeeJoinSets.isEmpty();
+        boolean hasIndividualJoinSets = individualJoinSets != null && !individualJoinSets.isEmpty();
+
+        List<JoinSet> resultList = Lists.newArrayList();
+        if (hasJoinSets) {
+            resultList.addAll(coffeeJoinSets);
+            if(hasIndividualJoinSets) {
+                for(JoinSet joinSet : individualJoinSets) {
+                    resultList.addAll(getIndividualJionSets(joinSet.getFiles()));
+                }
+            }
         } else {
             // Generate a joinset for each .coffee file
-            return Lists.transform(findCoffeeFilesInDirectory(coffeeDir), new Function<File, JoinSet>() {
-                public JoinSet apply(@Nullable File file) {
-                    return new StaticJoinSet(file);
-                }
-            });
+            return getIndividualJionSets(findCoffeeFilesInDirectory(coffeeDir));
         }
+        return resultList;
+    }
+
+    private List<JoinSet> getIndividualJionSets(List<File> files) throws IOException {
+        return Lists.transform(files, new Function<File, JoinSet>() {
+            public JoinSet apply(@Nullable File file) {
+                return new StaticJoinSet(file);
+            }
+        });
     }
 
     private static class StaticJoinSet extends JoinSet {
