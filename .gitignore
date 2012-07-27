@@ -3,3 +3,4 @@ target
 *.iws
 *.iml
 bin
+.idea
