@@ -12,8 +12,11 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Copyright 2011 Mark Derricutt.
@@ -103,8 +106,38 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
      */
     private List<JoinSet> individualJoinSets;
 
+    private static final Pattern importStatementPattern = Pattern.compile("#import\\s+\\S+\\.coffee");
+
+    public static void main(String[] args) throws IOException {
+        String fileCode = Files.toString(new File("test.coffee"), Charsets.UTF_8);
+        new File("test.coffee");
+        Matcher importMatcher = importStatementPattern.matcher(fileCode);
+        List<String> matches = Lists.newArrayList();
+        while(importMatcher.find()){
+            matches.add(importMatcher.group());
+        }
+        System.out.println(matches);
+    }
+
     @VisibleForTesting
     List<String> acceptableVersions = ImmutableList.of("1.2.0", "1.3.1", "1.3.3");
+
+    private String insertImports(File file, String originalCode, List<String> imports) throws Exception {
+        boolean topLevel = file.getParent() == null;
+        String dir = topLevel ? file.getAbsolutePath() : file.getParent();
+        for(String imp : imports) {
+            String template = topLevel ? "%s" : "%s/%s";
+            String fileToImport = String.format(template, dir, imp.split("\\s+")[1]);
+            getLog().info(String.format("Inserting import: %s into File: %s", fileToImport, file));
+            try {
+                String replacementCode = Files.toString(new File(fileToImport), Charsets.UTF_8) + "\n";
+                originalCode = originalCode.replace(imp, replacementCode);
+            } catch (Exception e) {
+                throw new FileNotFoundException(String.format("Trouble reading file: %s", fileToImport));
+            }
+        }
+        return originalCode;
+    }
 
     public void execute() throws MojoExecutionException {
 
@@ -131,9 +164,18 @@ public class CoffeeScriptCompilerMojo extends AbstractMojo {
 	                for (JoinSet joinSet : findJoinSets()) {
 	                    StringBuilder compiled = new StringBuilder();
 	                    for (File file : joinSet.getFiles()) {
+                            String fileCode = Files.toString(file, Charsets.UTF_8);
+                            Matcher importMatcher = importStatementPattern.matcher(fileCode);
+                            if(importMatcher.find()) {
+                                List<String> imports = Lists.newArrayList();
+                                imports.add(importMatcher.group());
+                                while(importMatcher.find()) {
+                                    imports.add(importMatcher.group());
+                                }
+                                fileCode = insertImports(file, fileCode, imports);
+                            }
 	                        getLog().info("Compiling File " + file.getName() + " in JoinSet:" + joinSet.getId());
-	                        compiled
-	                                .append(coffeeScriptCompiler.compile(Files.toString(file, Charsets.UTF_8)))
+	                        compiled.append(coffeeScriptCompiler.compile(fileCode))
 	                                .append("\n");
 	                    }
 	                    write(joinSet.getCoffeeOutputDirectory(), joinSet.getId(), compiled.toString());
